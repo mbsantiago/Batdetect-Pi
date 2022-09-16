@@ -5,6 +5,8 @@ if [ "$EUID" == 0 ]
   exit
 fi
 
+REPOSITORY_URL=https://github.com/mbsantiago/BirdNET-Pi.git 
+
 # Simple new installer
 HOME=$HOME
 USER=$USER
@@ -24,7 +26,7 @@ if [[ ! -z $PACKAGES_MISSING ]] ; then
 fi
 
 branch=main
-git clone -b $branch --depth=1 https://github.com/mcguirepr89/BirdNET-Pi.git ${HOME}/BirdNET-Pi &&
+git clone -b $branch --depth=1 ${REPOSITORY_URL} ${HOME}/BirdNET-Pi &&
 
 $HOME/BirdNET-Pi/scripts/install_birdnet.sh
 if [ ${PIPESTATUS[0]} -eq 0 ];then
