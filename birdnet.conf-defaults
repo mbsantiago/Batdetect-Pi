@@ -146,7 +146,7 @@ FREQSHIFT_PITCH=-1500
 ## CHANNELS holds the variable that corresponds to the number of channels the
 ## sound card supports.
 
-CHANNELS=2
+CHANNELS=1
 
 ## FULL_DISK can be set to configure how the system reacts to a full disk
 ## purge = Remove the oldest day's worth of recordings
@@ -188,7 +188,7 @@ EXTRACTION_LENGTH=
 ## ub ul uw vms voc vorbis vox w64 wav wavpcm wv wve xa xi
 ## Note: Most have not been tested.
 
-AUDIOFMT=mp3
+AUDIOFMT=wav
 
 ## DATABASE_LANG is used to set the language for the database
 

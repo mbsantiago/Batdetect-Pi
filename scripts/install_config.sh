@@ -174,7 +174,7 @@ FREQSHIFT_PITCH=-1500
 ## CHANNELS holds the variable that corresponds to the number of channels the
 ## sound card supports.
 
-CHANNELS=2
+CHANNELS=1
 
 ## FULL_DISK can be set to configure how the system reacts to a full disk
 ## purge = Remove the oldest day's worth of recordings
@@ -208,7 +208,7 @@ SAMPLING_RATE=256000
 EXTRACTION_LENGTH=
 
 ## AUDIOFMT set the audio format that sox should use for the extractions.
-## The default is mp3. Available formats are: 8svx aif aifc aiff aiffc al amb
+## The default is wav. Available formats are: 8svx aif aifc aiff aiffc al amb
 ## amr-nb amr-wb anb au avr awb caf cdda cdr cvs cvsd cvu dat dvms f32 f4 f64 f8
 ## fap flac fssd gsm gsrt hcom htk ima ircam la lpc lpc10 lu mat mat4 mat5 maud
 ## mp2 mp3 nist ogg paf prc pvf raw s1 s16 s2 s24 s3 s32 s4 s8 sb sd2 sds sf sl
@@ -216,7 +216,7 @@ EXTRACTION_LENGTH=
 ## ub ul uw vms voc vorbis vox w64 wav wavpcm wv wve xa xi
 ## Note: Most have not been tested.
 
-AUDIOFMT=mp3
+AUDIOFMT=wav
 
 ## DATABASE_LANG is the language used for the bird species database
 DATABASE_LANG=en
