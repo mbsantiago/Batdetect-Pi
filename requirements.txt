@@ -1,7 +1,8 @@
+# Rquirements for BirdNet-Pi
 pip
 wheel
 setuptools
-tflite_runtime-2.6.0-cp39-none-linux_aarch64.whl
+# tflite_runtime-2.6.0-cp39-none-linux_aarch64.whl
 colorama==0.4.4
 librosa
 pytz
@@ -14,3 +15,13 @@ apprise
 paho-mqtt
 pytest==7.1.2
 pytest-mock==3.7.0
+
+
+# Added from BatDetect
+matplotlib==3.6.2
+numpy==1.23.4
+scikit_learn==1.2.0
+scipy==1.9.3
+torch==1.13.0
+torchaudio==0.13.0
+torchvision==0.14.0
