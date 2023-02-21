@@ -10,6 +10,11 @@ my_dir=$HOME/BirdNET-Pi/scripts
 sudo -E chown -R $USER:$USER $HOME/*
 sudo chmod -R g+wr $HOME/*
 
+# Create blank sitename as it's optional. First time install will use $HOSTNAME.
+if ! grep SITE_NAME /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "SITE_NAME=\"\"" >> /etc/birdnet/birdnet.conf
+fi
+
 if ! grep PRIVACY_THRESHOLD /etc/birdnet/birdnet.conf &>/dev/null;then
   sudo -u$USER echo "PRIVACY_THRESHOLD=0" >> /etc/birdnet/birdnet.conf
   git -C $HOME/BirdNET-Pi rm $my_dir/privacy_server.py
@@ -46,6 +51,9 @@ if ! grep APPRISE_NOTIFY_NEW_SPECIES /etc/birdnet/birdnet.conf &>/dev/null;then
 fi
 if ! grep APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY /etc/birdnet/birdnet.conf &>/dev/null;then
   sudo -u$USER echo "APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=0 " >> /etc/birdnet/birdnet.conf
+fi
+if ! grep APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=0 " >> /etc/birdnet/birdnet.conf
 fi
 
 # If the config does not contain the DATABASE_LANG setting, we'll want to add it.
@@ -119,6 +127,42 @@ fi
 # Make IceCast2 a little more secure
 sudo sed -i 's|<!-- <bind-address>.*|<bind-address>127.0.0.1</bind-address>|;s|<!-- <shoutcast-mount>.*|<shoutcast-mount>/stream</shoutcast-mount>|' /etc/icecast2/icecast.xml
 sudo systemctl restart icecast2
+
+if ! grep FREQSHIFT_TOOL /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "FREQSHIFT_TOOL=sox" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep FREQSHIFT_HI /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "FREQSHIFT_HI=6000" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep FREQSHIFT_LO /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "FREQSHIFT_LO=3000" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep FREQSHIFT_PITCH /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "FREQSHIFT_PITCH=-1500" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep HEARTBEAT_URL /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "HEARTBEAT_URL=" >> /etc/birdnet/birdnet.conf
+fi
+
+if ! grep MODEL /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "MODEL=BirdNET_6K_GLOBAL_MODEL" >> /etc/birdnet/birdnet.conf
+fi
+if ! grep SF_THRESH /etc/birdnet/birdnet.conf &>/dev/null;then
+  sudo -u$USER echo "SF_THRESH=0.03" >> /etc/birdnet/birdnet.conf
+fi
+sudo chmod +x ~/BirdNET-Pi/scripts/install_language_label_nm.sh
+
+sqlite3 $HOME/BirdNET-Pi/scripts/birds.db << EOF
+CREATE INDEX IF NOT EXISTS "detections_Com_Name" ON "detections" ("Com_Name");
+CREATE INDEX IF NOT EXISTS "detections_Date_Time" ON "detections" ("Date" DESC, "Time" DESC);
+EOF
+
+$HOME/BirdNET-Pi/birdnet/bin/pip3 install apprise==1.2.1 >/dev/null
+
+if ! grep -q 'RuntimeMaxSec=' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"&>/dev/null; then
+    sudo -E sed -i '/\[Service\]/a RuntimeMaxSec=3600' "$HOME/BirdNET-Pi/templates/birdnet_analysis.service"
+    sudo systemctl daemon-reload && restart_services.sh
+fi
 
 sudo systemctl daemon-reload
 restart_services.sh

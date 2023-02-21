@@ -4,7 +4,7 @@
   BirdNET-Pi
 </h1>
 <p align="center">
-A realtime acoustic bird classification system for the Raspberry Pi 4B, 3B+, and 0W2
+A realtime acoustic bird classification system for the Raspberry Pi 4B, 400, 3B+, and 0W2
 </p>
 <p align="center">
   <img src="https://user-images.githubusercontent.com/60325264/140656397-bf76bad4-f110-467c-897d-992ff0f96476.png" />
@@ -14,23 +14,19 @@ Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a> from 
 </p>
 
 ## Introduction
-BirdNET-Pi is built on the [TFLite version of BirdNET](https://github.com/kahst/BirdNET-Lite) by [**@kahst**](https://github.com/kahst) <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg"></a> using [pre-built TFLite binaries](https://github.com/PINTO0309/TensorflowLite-bin) by [**@PINTO0309**](https://github.com/PINTO0309) . It is able to recognize bird sounds from a USB microphone or sound card in realtime and share its data with the rest of the world.
+BirdNET-Pi is built on the (deprecated) [TFLite version of BirdNET](https://github.com/kahst/BirdNET-Lite) by [**@kahst**](https://github.com/kahst) <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg"></a> using [pre-built TFLite binaries](https://github.com/PINTO0309/TensorflowLite-bin) by [**@PINTO0309**](https://github.com/PINTO0309) . It is able to recognize bird sounds from a USB microphone or sound card in realtime and share its data with the rest of the world.
 
 Check out birds from around the world
 - [BirdWeather](https://app.birdweather.com)<br>
 - [Johannesburg, South Africa](https://joburg.birdnetpi.com)<br>
 - [Öringe, Tyresö, Sweden](https://tyreso.birdnetpi.com)<br>
-- [Murrysville, Pennsylvania, United States](https://murrysvillepa.birdnetpi.com)
 - [Berowra, New South Wales, Australia](https://berowra.birdnetpi.com)
-- [Fairview, Tennessee, United States](https://fairviewtennessee.birdnetpi.com)
 - [Dundas, Ontario, Canada](https://dundasontario.birdnetpi.com)
 - [Bungendore, New South Wales, Australia](https://bungendorensw.birdnetpi.com)
 - [Rivers Bend, Ohio, United States](https://riversbendoh.birdnetpi.com)
 - [Vienna, Virginia, United States](https://viennava.birdnetpi.com)
 - [Grevenbroich, Elsen, Germany](https://grevenbroich-elsen.birdnetpi.com)
 - [Occoquan, Virginia, United States](https://occoquanva.birdnetpi.com)
-- [Westmoreland, Pennsylvania, United States](https://westmorelandbnc.birdnetpi.com)
-- [Latrobe, Pennsylvania, United States](https://stvincentcollege.birdnetpi.com)
 - [Cambridge, Massachusetts, United States](https://cambridgema.birdnetpi.com)
 
 [Share your installation!!](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
@@ -62,12 +58,17 @@ Currently listening in these countries . . . that I know of . . .
 - Denmark
 - Costa Rica
 - The Philippines
+- Hungary
+- South Sudan
+- Argentina
+- Brazil
 
 ## Features
-* 24/7 recording and BirdNET-Lite analysis
-* Automatic extraction of detected data (creating audio clips of detected bird sounds)
-* Spectrograms available for all extractions
+* 24/7 recording and automatic identification of bird songs using BirdNET machine learning
+* Bird sounds are automatically extracted and catalogued  
+* Visualize your recorded bird data and analyze trends
 * Live audio stream & spectrogram
+* Automatic disk space management, where old audio files are periodically purged
 * [BirdWeather](https://app.birdweather.com) integration -- you can request a BirdWeather ID from BirdNET-Pi's "Tools" > "Settings" page
 * Web interface access to all data and logs provided by [Caddy](https://caddyserver.com)
 * [GoTTY](https://github.com/yudai/gotty) Web Terminal
@@ -80,13 +81,11 @@ Currently listening in these countries . . . that I know of . . .
 * Localization supported
 
 ## Requirements
-* A Raspberry Pi 4B, Raspberry Pi 3B+, or Raspberry Pi 0W2 (The 3B+ and 0W2 must run on RaspiOS-ARM64-**Lite**)
+* A Raspberry Pi 4B, Raspberry Pi 400, Raspberry Pi 3B+, or Raspberry Pi 0W2 (The 3B+ and 0W2 must run on RaspiOS-ARM64-**Lite**)
 * An SD Card with the **_64-bit version of RaspiOS_** installed (please use Bullseye) -- Lite is recommended, but the installation works on RaspiOS-ARM64-Full as well. Downloads available within the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 * A USB Microphone or Sound Card
 
 ## Installation
-**IMPORTANT:** Not yet tested on [the newest RaspiOS image](https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-09-07/) 
-
 [A comprehensive installation guide is available here](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Installation-Guide).
 
 Please note that installing BirdNET-Pi on top of other servers is not supported. If this is something that you require, please open a discussion for your idea and inquire about how to contribute to development.
@@ -107,6 +106,7 @@ The BirdNET-Pi can be accessed from any web browser on the same network:
 - Password is empty by default. Set this in "Tools" > "Settings" > "Advanced Settings"
 
 Please take a look at the [wiki](https://github.com/mcguirepr89/BirdNET-Pi/wiki) and [discussions](https://github.com/mcguirepr89/BirdNET-Pi/discussions) for information on
+- [BirdNET-Pi's Deep Convolutional Neural Network(s)](https://github.com/mcguirepr89/BirdNET-Pi/wiki/BirdNET-Pi:-some-theory-on-classification-&-some-practical-hints)
 - [making your installation public](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Sharing-Your-BirdNET-Pi)
 - [backing up and restoring your database](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Backup-and-Restore-the-Database)
 - [adjusting your sound card settings](https://github.com/mcguirepr89/BirdNET-Pi/wiki/Adjusting-your-sound-card)
@@ -129,6 +129,8 @@ Use the web interface and go to "Tools" > "System Controls" > "Update." If you e
 ## Troubleshooting and Ideas
 *Hint: A lot of weird problems can be solved by simply restarting the core services. Do this from the web interface "Tools" > "Services" > "Restart Core Services"
 Having trouble or have an idea? *Submit an issue for trouble* and a *discussion for ideas*. Please do *not* submit an issue as a discussion -- the issue tracker solicits information that is needed for anyone to help -- discussions are *not for issues*.
+
+PLEASE search the repo for your issue before creating a new one. This repo has nothing to do with the validity of the detection results, so please do not start any issues around "False positives."
 
 ## Sharing
 Please join a Discussion!! and please join [BirdWeather!!](https://app.birdweather.com)
@@ -178,6 +180,11 @@ Current database languages include the list below:
 | Swedish | 264 | 4.15% |
 | Thai | 5580 | 87.71% |
 | Ukrainian | 646 | 10.15% |
+
+## Screenshots
+![chrome_olUUgVo1Ka](https://user-images.githubusercontent.com/103586016/219236461-c717e88b-134f-4916-a691-eb7c055c55bf.png)
+![chrome_HNMJKSPwV0](https://user-images.githubusercontent.com/103586016/217896322-aee3ecc4-e40e-40df-ade1-79f05ded21f2.png)
+
 
 ## :thinking:
 Are you a lucky ducky with an extra Raspberry Pi 4B lying around? [Here's an idea!](https://foldingathome.org/alternative-downloads)

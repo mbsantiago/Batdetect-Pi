@@ -100,7 +100,13 @@ run_analysis() {
     echo "${1}/${i}" > $HOME/BirdNET-Pi/analyzing_now.txt
     [ -z ${RECORDING_LENGTH} ] && RECORDING_LENGTH=15
     echo "RECORDING_LENGTH set to ${RECORDING_LENGTH}"
+    itr=0
     until [ -z "$(lsof -t ${1}/${i})" ];do
+      itr=$((itr+1))
+      if [ $itr -eq $(($RECORDING_LENGTH * 3)) ]; then
+        echo "Maximum number of attempts exceeded. Exiting & restarting service."
+        exit
+      fi
       sleep 2
     done
 
@@ -152,6 +158,11 @@ ${BIRDWEATHER_ID_LOG}
       ${INCLUDEPARAM} \
       ${EXCLUDEPARAM} \
       ${BIRDWEATHER_ID_PARAM}
+    if [ ! -z $HEARTBEAT_URL ]; then
+      echo "Performing Heartbeat"
+      IP=`curl -s ${HEARTBEAT_URL}`
+      echo "Heartbeat: $IP"
+    fi
   done
 }
 

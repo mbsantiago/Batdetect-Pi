@@ -13,6 +13,23 @@ function syslog_shell_exec($cmd, $sudo_user = null) {
   }
 }
 
+if(isset($_GET['threshold'])) {
+  $threshold = $_GET['threshold'];
+  if (!is_numeric($threshold) || $threshold < 0 || $threshold > 1) {
+    die('Invalid threshold value');
+  }
+
+  $user = trim(shell_exec("awk -F: '/1000/{print $1}' /etc/passwd"));
+  $home = trim(shell_exec("awk -F: '/1000/{print $6}' /etc/passwd"));
+
+  $command = "sudo -u $user ".$home."/BirdNET-Pi/birdnet/bin/python3 ".$home."/BirdNET-Pi/scripts/species.py --threshold $threshold 2>&1";
+
+  $output = shell_exec($command);
+
+  echo $output;
+  die();
+}
+
 if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
   shell_exec("sudo service php7.4-fpm restart");
   die();
@@ -22,14 +39,20 @@ if(isset($_GET['restart_php']) && $_GET['restart_php'] == "true") {
 if(isset($_GET["latitude"])){
   $latitude = $_GET["latitude"];
   $longitude = $_GET["longitude"];
+  $site_name = $_GET["site_name"];
+  $site_name = str_replace('"', "", $site_name);
+  $site_name = str_replace('\'', "", $site_name);
   $birdweather_id = $_GET["birdweather_id"];
   $apprise_input = $_GET['apprise_input'];
   $apprise_notification_title = $_GET['apprise_notification_title'];
   $apprise_notification_body = $_GET['apprise_notification_body'];
+  $minimum_time_limit = $_GET['minimum_time_limit'];
   $flickr_api_key = $_GET['flickr_api_key'];
   $flickr_filter_email = $_GET["flickr_filter_email"];
   $language = $_GET["language"];
   $timezone = $_GET["timezone"];
+  $model = $_GET["model"];
+  $sf_thresh = $_GET["sf_thresh"];
 
   if(isset($_GET['apprise_notify_each_detection'])) {
     $apprise_notify_each_detection = 1;
@@ -96,8 +119,26 @@ if(isset($_GET["latitude"])){
     syslog(LOG_INFO, "Successfully changed language to '$language'");
   }
 
+  if ($model != $lang_config['MODEL']){
+    $user = trim(shell_exec("awk -F: '/1000/{print $1}' /etc/passwd"));
+    $home = trim(shell_exec("awk -F: '/1000/{print $6}' /etc/passwd"));
+
+    // Archive old language file
+    syslog_shell_exec("cp -f $home/BirdNET-Pi/model/labels.txt $home/BirdNET-Pi/model/labels.txt.old", $user);
+
+    if($model == "BirdNET_GLOBAL_3K_V2.2_Model_FP16"){
+    // Install new language label file
+      syslog_shell_exec("sudo chmod +x $home/BirdNET-Pi/scripts/install_language_label_nm.sh && $home/BirdNET-Pi/scripts/install_language_label_nm.sh -l $language", $user);
+    } else {
+      syslog_shell_exec("$home/BirdNET-Pi/scripts/install_language_label.sh -l $language", $user);
+    }
+
+    syslog(LOG_INFO, "Successfully changed language to '$language'");
+  }
+
 
   $contents = file_get_contents("/etc/birdnet/birdnet.conf");
+  $contents = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents);
   $contents = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents);
   $contents = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents);
   $contents = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents);
@@ -110,8 +151,12 @@ if(isset($_GET["latitude"])){
   $contents = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=$flickr_api_key", $contents);
   $contents = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents);
   $contents = preg_replace("/FLICKR_FILTER_EMAIL=.*/", "FLICKR_FILTER_EMAIL=$flickr_filter_email", $contents);
+  $contents = preg_replace("/APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=.*/", "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=$minimum_time_limit", $contents);
+  $contents = preg_replace("/MODEL=.*/", "MODEL=$model", $contents);
+  $contents = preg_replace("/SF_THRESH=.*/", "SF_THRESH=$sf_thresh", $contents);
 
   $contents2 = file_get_contents("./scripts/thisrun.txt");
+  $contents2 = preg_replace("/SITE_NAME=.*/", "SITE_NAME=\"$site_name\"", $contents2);
   $contents2 = preg_replace("/LATITUDE=.*/", "LATITUDE=$latitude", $contents2);
   $contents2 = preg_replace("/LONGITUDE=.*/", "LONGITUDE=$longitude", $contents2);
   $contents2 = preg_replace("/BIRDWEATHER_ID=.*/", "BIRDWEATHER_ID=$birdweather_id", $contents2);
@@ -124,7 +169,18 @@ if(isset($_GET["latitude"])){
   $contents2 = preg_replace("/FLICKR_API_KEY=.*/", "FLICKR_API_KEY=$flickr_api_key", $contents2);
   $contents2 = preg_replace("/DATABASE_LANG=.*/", "DATABASE_LANG=$language", $contents2);
   $contents2 = preg_replace("/FLICKR_FILTER_EMAIL=.*/", "FLICKR_FILTER_EMAIL=$flickr_filter_email", $contents2);
+  $contents2 = preg_replace("/APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=.*/", "APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=$minimum_time_limit", $contents2);
+  $contents2 = preg_replace("/MODEL=.*/", "MODEL=$model", $contents2);
+  $contents2 = preg_replace("/SF_THRESH=.*/", "SF_THRESH=$sf_thresh", $contents2);
 
+
+
+  if($site_name != $config["SITE_NAME"]) {
+    echo "<script>setTimeout(
+    function() {
+      window.parent.document.location.reload();
+    }, 1000);</script>";
+  }
 
   $fh = fopen("/etc/birdnet/birdnet.conf", "w");
   $fh2 = fopen("./scripts/thisrun.txt", "w");
@@ -224,7 +280,7 @@ if(isset($_GET['sendtest']) && $_GET['sendtest'] == "true") {
   $body = str_replace("\$overlap", $overlap, $body);
   $body = str_replace("\$flickrimage", $exampleimage, $body);
 
-  echo "<pre class=\"bash\">".shell_exec($home."/BirdNET-Pi/birdnet/bin/apprise -vv -t '".$title."' -b '".$body."' ".$attach." ".$cf." ")."</pre>";
+  echo "<pre class=\"bash\">".shell_exec($home."/BirdNET-Pi/birdnet/bin/apprise -vv --plugin-path ".$home."/.apprise/plugins "." -t '".$title."' -b '".$body."' ".$attach." ".$cf." ")."</pre>";
 
   die();
 }
@@ -270,6 +326,15 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 ?>    
 
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('modelsel').addEventListener('change', function() {
+    if(this.value == "BirdNET_GLOBAL_3K_V2.2_Model_FP16"){ 
+      document.getElementById("soft").style.display="unset";
+    } else {
+      document.getElementById("soft").style.display="none";
+    }
+  });
+}, false);
 function sendTestNotification(e) {
   document.getElementById("testsuccessmsg").innerHTML = "";
   e.classList.add("disabled");
@@ -289,9 +354,136 @@ function sendTestNotification(e) {
     xmlHttp.send(null);
 }
 </script>
+      <table class="settingstable"><tr><td>
+      <h2>Model</h2>
+
+      <label for="model">Select a Model: </label>
+      <select id="modelsel" name="model">
+      <?php
+      $models = array("BirdNET_6K_GLOBAL_MODEL", "BirdNET_GLOBAL_3K_V2.2_Model_FP16");
+      foreach($models as $modelName){
+          $isSelected = "";
+          if($config['MODEL'] == $modelName){
+            $isSelected = 'selected="selected"';
+          }
+
+          echo "<option value='{$modelName}' $isSelected>$modelName</option>";
+        }
+      ?>
+      </select>
+      <br>
+      <span <?php if($config['MODEL'] == "BirdNET_6K_GLOBAL_MODEL") { ?>style="display: none"<?php } ?> id="soft">
+      <label for="sf_thresh">Species Occurence Frequency Threshold [0.0005, 0.99]: </label>
+      <input name="sf_thresh" type="number" max="0.99" min="0.0005" step="any" value="<?php print($config['SF_THRESH']);?>"/> <span onclick="document.getElementById('sfhelp').style.display='unset'" style="text-decoration:underline;cursor:pointer">[more info]</span><br>
+      <p id="sfhelp" style='display:none'>This value is used by the model to constrain the list of possible species that it will try to detect, given the minimum occurence frequency. A 0.03 threshold means that for a species to be included in this list, it needs to, on average, be seen on at least 3% of historically submitted eBird checklists for your given lat/lon/current week of year. So, the lower the threshold, the rarer the species it will include.<br><br>If you'd like to tinker with this threshold value and see which species make it onto the list, <?php if($config['MODEL'] == "BirdNET_6K_GLOBAL_MODEL"){ ?>please click "Update Settings" at the very bottom of this page to install the appropriate label file, then come back here and you'll be able to use the Species List Tester.<?php } else { ?>you can use this tool: <button type="button" class="testbtn" id="openModal">Species List Tester</button><?php } ?></p>
+      </span>
+
+<script src="static/dialog-polyfill.js"></script>
+
+<dialog id="modal">
+  <div>
+    <label for="threshold">Threshold:</label>
+    <input type="number" id="threshold" step="0.01" min="0" max="1" value="">
+    <button type="button" id="runProcess">Preview Species List</button>
+  </div>
+  <pre id="output"></pre>
+  <button type="button" id="closeModal">Close</button>
+</dialog>
+
+<style>
+#output {
+  max-width: 100vw;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+#modal {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+#modal div {
+  display: flex;
+  align-items: center;
+}
+
+#modal input[type="number"] {
+  height: 32px;
+}
+
+#modal button {
+  height: 32px;
+  margin-left: 5px;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+</style>
+
+
+<script>
+// Get the button and modal elements
+const openModalBtn = document.getElementById('openModal');
+const modal = document.getElementById('modal');
+dialogPolyfill.registerDialog(modal);
+const output = document.getElementById('output');
+const thresholdInput = document.getElementById('threshold');
+const runProcessBtn = document.getElementById('runProcess');
+const sfThreshInput = document.getElementsByName('sf_thresh')[0];
+const closeModalBtn = document.getElementById('closeModal');
+
+
+// Add an event listener to the button to open the modal
+openModalBtn.addEventListener('click', () => {
+
+  // Set the initial value of the threshold input element
+  thresholdInput.value = sfThreshInput.value;
+
+// Show the modal
+  modal.showModal();
+});
+
+// Add an event listener to the "Preview Species List" button
+runProcessBtn.addEventListener('click', () => {
+
+  runProcess();
+});
+
+// Add an event listener to the "Close" button
+closeModalBtn.addEventListener('click', () => {
+  modal.close();
+});
+
+// Function to run the process
+function runProcess() {
+  // Get the value of the threshold input element
+  const threshold = thresholdInput.value;
+
+ // Set the output to "Loading..."
+  output.innerHTML = "Loading...";
+
+  // Make the AJAX request
+  const xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === XMLHttpRequest.DONE) {
+      // Handle the response
+      output.innerHTML = xhr.responseText;
+    }
+  };
+  xhr.open('GET', `scripts/config.php?threshold=${threshold}`);
+  xhr.send();
+}
+</script>
+
+      <dl>
+      <dt>BirdNET_6K_GLOBAL_MODEL (2020)</dt><br>
+      <dd id="ddnewline">This model comes from BirdNET-Lite, with bird sound recognition for more than 6,000 species worldwide. This is the default option and will generally work very well for most use cases.</dd>
+      <dt>BirdNET_GLOBAL_3K_V2.2_Model_FP16 (2022)</dt><br>
+      <dd id="ddnewline">This model comes from BirdNET-Analyzer, a newer work-in-progress project with aims to improve on the old model. Currently it only supports about 3,500 species worldwide, so for users in North America, this model is generally much more accurate than the above model, but elsewhere it will be less accurate and possibly useless.</dd>
+      </dl>
+      </td></tr></table><br>
 
       <table class="settingstable"><tr><td>
       <h2>Location</h2>
+      <label for="site_name">Site Name: </label>
+      <input name="site_name" type="text" value="<?php print($config['SITE_NAME']);?>"/> (Optional)<br>
       <label for="latitude">Latitude: </label>
       <input name="latitude" type="number" max="90" min="-90" step="0.0001" value="<?php print($config['LATITUDE']);?>" required/><br>
       <label for="longitude">Longitude: </label>
@@ -353,7 +545,13 @@ https://discordapp.com/api/webhooks/{WebhookID}/{WebhookToken}
       <input type="checkbox" name="apprise_notify_each_detection" <?php if($config['APPRISE_NOTIFY_EACH_DETECTION'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
       <label for="apprise_weekly_report">Notify each new detection</label><br>
       <input type="checkbox" name="apprise_weekly_report" <?php if($config['APPRISE_WEEKLY_REPORT'] == 1 && filesize($home."/BirdNET-Pi/apprise.txt") != 0) { echo "checked"; };?> >
-      <label for="apprise_weekly_report">Send weekly report</label><br><br>
+      <label for="apprise_weekly_report">Send weekly report</label><br>
+
+      <hr>
+      <label for="quantity">Minimum time between notifications of the same species (sec):</label>
+      <input type="number" id="minimum_time_limit" name="minimum_time_limit" value="<?php echo $config['APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES'];?>" min="0"><br>
+
+      <br>
 
       <button type="button" class="testbtn" onclick="sendTestNotification(this)">Send Test Notification</button><br>
       <span id="testsuccessmsg"></span>
@@ -488,3 +686,4 @@ if(isset($_GET['status'])){
         <button type="submit" name="view" value="Advanced">Advanced Settings</button>
       </form>
 </div>
+

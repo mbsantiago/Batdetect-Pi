@@ -6,7 +6,11 @@ $home = shell_exec("awk -F: '/1000/{print $6}' /etc/passwd");
 $home = trim($home);
 if(!isset($_SESSION['behind'])) {
   $fetch = shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi fetch 2>&1");
-  $_SESSION['behind'] = trim(shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi status | sed -n '2 p' | cut -d ' ' -f 7"));
+  $str = trim(shell_exec("sudo -u".$user." git -C ".$home."/BirdNET-Pi status"));
+  if (preg_match("/behind '.*?' by (\d+) commit(s?)\b/", $str, $matches)) {
+    $num_commits_behind = $matches[1];
+    $_SESSION['behind'] = $num_commits_behind; 
+  }
   if(isset($_SESSION['behind'])&&intval($_SESSION['behind']) >= 99) {?>
   <style>
   .updatenumber { 
@@ -21,7 +25,7 @@ if (file_exists('./scripts/thisrun.txt')) {
   $config = parse_ini_file('./scripts/firstrun.ini');
 }
 ?>
-<link rel="stylesheet" href="style.css?v=8.05.22">
+<link rel="stylesheet" href="style.css?v=1.20.23">
 <style>
 body::-webkit-scrollbar {
   display:none
@@ -104,6 +108,7 @@ if(isset($_GET['view'])){
   if($_GET['view'] == "View Log"){echo "<body style=\"scroll:no;overflow-x:hidden;\"><iframe style=\"width:calc( 100% + 1em);\" src=\"/log\"></iframe></body>";}
   if($_GET['view'] == "Overview"){include('overview.php');}
   if($_GET['view'] == "Today's Detections"){include('todays_detections.php');}
+  if($_GET['view'] == "Kiosk"){$kiosk = true;include('todays_detections.php');}
   if($_GET['view'] == "Species Stats"){include('stats.php');}
   if($_GET['view'] == "Weekly Report"){include('weekly_report.php');}
   if($_GET['view'] == "Streamlit"){echo "<iframe src=\"/stats\"></iframe>";}

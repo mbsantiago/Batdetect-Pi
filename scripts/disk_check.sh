@@ -9,6 +9,9 @@ if [ "${used//%}" -ge 95 ]; then
     purge) echo "Removing oldest data"
         cd ${EXTRACTED}/By_Date/
         curl localhost/views.php?view=Species%20Stats &>/dev/null
+        if ! grep -qxFe \#\#start $HOME/BirdNET-Pi/scripts/disk_check_exclude.txt; then
+            exit
+        fi
         filestodelete=$(($(find ${EXTRACTED}/By_Date/* -type f | wc -l) / $(find ${EXTRACTED}/By_Date/* -maxdepth 0 -type d | wc -l)))
         iter=0
         for i in */*/*; do
@@ -20,6 +23,7 @@ if [ "${used//%}" -ge 95 ]; then
             fi
             ((iter++))
         done
+        find ~/BirdSongs/ -type d -empty -mtime +90 -delete
         find ${EXTRACTED}/By_Date/ -empty -type d -delete;;
 
        #rm -drfv "$(find ${EXTRACTED}/By_Date/* -maxdepth 1 -type d -prune \

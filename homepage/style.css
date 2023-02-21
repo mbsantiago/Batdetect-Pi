@@ -576,6 +576,7 @@ button:hover {
 }
 
 button.legacyview {
+  display: none;
   color:gray;
   margin:5px;
   float:right;
@@ -811,4 +812,8 @@ pre#timer.bash {
   line-height:5px;
   padding:3px;
   background-color:#9fe29b
+}
+
+#ddnewline::before {
+   content: none;
 }

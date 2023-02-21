@@ -7,11 +7,29 @@ trap 'exit 1' SIGINT SIGHUP
 echo "Beginning $0"
 birdnet_conf=$my_dir/birdnet.conf
 
+# Retrieve latitude and longitude from web
+LATITUDE=$(curl -s4 ifconfig.co/json | jq .latitude)
+LONGITUDE=$(curl -s4 ifconfig.co/json | jq .longitude)
+
+# Define regular expression pattern
+pattern='^[+-]?[0-9]{2}\.[0-9]{4}$'
+
+# Check if latitude and longitude match the pattern
+if ! [[ $LATITUDE =~ $pattern ]] || ! [[ $LONGITUDE =~ $pattern ]]; then
+  echo -e "\033[33mCouldn't set latitude and longitude automatically, you will need to do this manually from the web interface by navigating to Tools -> Settings -> Location.\033[0m"
+  LATITUDE=0.0000
+  LONGITUDE=0.0000
+fi
+
 install_config() {
   cat << EOF > $birdnet_conf
 ################################################################################
 #                    Configuration settings for BirdNET-Pi                     #
 ################################################################################
+
+# Optional: Site Title for banner
+
+SITE_NAME="$HOSTNAME"
 
 #--------------------- Required: Latitude, and Longitude ----------------------#
 
@@ -19,8 +37,17 @@ install_config() {
 ## TO BE CHANGED TO STATIC VALUES
 ## Please only go to 4 decimal places. Example:43.3984
 
-LATITUDE=$(curl -s4 ifconfig.co/json | jq .latitude)
-LONGITUDE=$(curl -s4 ifconfig.co/json | jq .longitude)
+
+LATITUDE=$LATITUDE
+LONGITUDE=$LONGITUDE
+
+#--------------------------------- Model --------------------------------------#
+#_____________The variable below configures which BirdNET model is_____________#
+#______________________used for detecting bird audio.__________________________#
+#_It's recommended that you only change these values through the web interface.#
+
+MODEL=BirdNET_6K_GLOBAL_MODEL
+SF_THRESH=0.03
 
 #---------------------  BirdWeather Station Information -----------------------#
 #_____________The variable below can be set to have your BirdNET-Pi____________#
@@ -76,6 +103,8 @@ APPRISE_NOTIFICATION_BODY="A \$sciname \$comname was just detected with a confid
 APPRISE_NOTIFY_EACH_DETECTION=0
 APPRISE_NOTIFY_NEW_SPECIES=0
 APPRISE_WEEKLY_REPORT=1
+APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY=0
+APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES=0
 
 #----------------------  Flickr Images API Configuration -----------------------#
 ## If FLICKR_API_KEY is set, the web interface will try and display bird images 
@@ -126,6 +155,22 @@ CONFIDENCE=0.7
 
 SENSITIVITY=1.25
 
+## Configuration of the frequency shifting feature, useful for earing impaired people.
+
+## FREQSHIFT_TOOL
+
+FREQSHIFT_TOOL=sox
+
+## If the tool is ffmpeg, you have to define a freq. shift from HI to LO:
+## FREQSHIFT_HI
+FREQSHIFT_HI=6000
+## FREQSHIFT_LO
+FREQSHIFT_LO=3000
+
+## If the tool is sox, you have to define the pitch shift (amount of 100ths of semintone)
+## FREQSHIFT_PITCH
+FREQSHIFT_PITCH=-1500
+
 ## CHANNELS holds the variable that corresponds to the number of channels the
 ## sound card supports.
 
@@ -170,6 +215,12 @@ AUDIOFMT=mp3
 
 ## DATABASE_LANG is the language used for the bird species database
 DATABASE_LANG=en
+
+## HEARTBEAT_URL is a location to ping every time some analysis is done
+## no information is sent to the the URL, its a heart beat to show that the
+## analysis is continuing
+
+HEARTBEAT_URL=
 
 ## SILENCE_UPDATE_INDICATOR is for quieting the display of how many commits
 ## your installation is behind by, relative to the Github repo. This number

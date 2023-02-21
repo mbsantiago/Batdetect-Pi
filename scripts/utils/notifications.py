@@ -4,17 +4,27 @@ import socket
 import sqlite3
 from datetime import datetime
 import requests
+import time as timeim
 
 userDir = os.path.expanduser('~')
 APPRISE_CONFIG = userDir + '/BirdNET-Pi/apprise.txt'
 DB_PATH = userDir + '/BirdNET-Pi/scripts/birds.db'
 
+flickr_images = {}
+species_last_notified = {}
+
+asset = apprise.AppriseAsset(
+    plugin_paths=[
+        userDir + "/.apprise/plugins",
+        userDir + "/.config/apprise/plugins",
+    ]
+)
+apobj = apprise.Apprise(asset=asset)
+config = apprise.AppriseConfig()
+config.add(APPRISE_CONFIG)
+apobj.add(config)
 
 def notify(body, title, attached=""):
-    apobj = apprise.Apprise()
-    config = apprise.AppriseConfig()
-    config.add(APPRISE_CONFIG)
-    apobj.add(config)
     if attached != "":
         apobj.notify(
             body=body,
@@ -37,6 +47,17 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
         body = settings_dict.get('APPRISE_NOTIFICATION_BODY')
         sciName, comName = species.split("_")
 
+        APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES = settings_dict.get('APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES')
+        if APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES != "0":
+            if species_last_notified.get(comName) is not None:
+                try:
+                    if int(timeim.time()) - species_last_notified[comName] < int(APPRISE_MINIMUM_SECONDS_BETWEEN_NOTIFICATIONS_PER_SPECIES):
+                        return
+                except Exception as e:
+                    print("APPRISE NOTIFICATION EXCEPTION: "+str(e))
+                    return
+
+        #TODO: this all needs to be changed, we changed the caddy default to allow direct IP access, so birdnetpi.local shouldn't be relied on anymore
         try:
             websiteurl = settings_dict.get('BIRDNETPI_URL')
             if len(websiteurl) == 0:
@@ -46,7 +67,6 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
 
         listenurl = websiteurl+"?filename="+path
         image_url = ""
-        flickr_images = {}
 
         if len(settings_dict.get('FLICKR_API_KEY')) > 0 and "$flickrimage" in body:
             if not comName in flickr_images:
@@ -54,6 +74,7 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
                     # TODO: Make this work with non-english comnames. Implement the "// convert sci name to English name" logic from overview.php here
                     url = 'https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key='+str(settings_dict.get('FLICKR_API_KEY'))+'&text='+str(comName)+' bird&sort=relevance&per_page=5&media=photos&format=json&license=2%2C3%2C4%2C5%2C6%2C9&nojsoncallback=1'
                     resp = requests.get(url=url)
+                    resp.encoding = "utf-8"
                     data = resp.json()["photos"]["photo"][0]
 
                     image_url = 'https://farm'+str(data["farm"])+'.static.flickr.com/'+str(data["server"])+'/'+str(data["id"])+'_'+str(data["secret"])+'_n.jpg'
@@ -93,6 +114,7 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
                 .replace("$flickrimage", image_url if "{" in body else "")\
                 .replace("$overlap", overlap)
             notify(notify_body, notify_title, image_url)
+            species_last_notified[comName] = int(timeim.time())
 
         APPRISE_NOTIFICATION_NEW_SPECIES_DAILY_COUNT_LIMIT = 1  # Notifies the first N per day.
         if settings_dict.get('APPRISE_NOTIFY_NEW_SPECIES_EACH_DAY') == "1":
@@ -137,6 +159,7 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
                         .replace("$overlap", overlap)\
                         + " (first time today)"
                     notify(notify_body, notify_title, image_url)
+                    species_last_notified[comName] = int(timeim.time())
                 con.close()
             except sqlite3.Error as e:
                 print(e)
@@ -184,6 +207,7 @@ def sendAppriseNotifications(species, confidence, path, date, time, week, latitu
                         .replace("$overlap", overlap)\
                         + " (only seen " + str(int(numberDetections)) + " times in last 7d)"
                     notify(notify_body, notify_title, image_url)
+                    species_last_notified[comName] = int(timeim.time())
                 con.close()
             except sqlite3.Error:
                 print("Database busy")
