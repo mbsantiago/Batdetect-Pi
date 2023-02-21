@@ -169,9 +169,9 @@ PRIVACY_THRESHOLD=0
 RECORDING_LENGTH=15
 
 ## SAMPLING_RATE sets the sampling rate at which audio will be recorded and
-## analyzed. The default is 441000.
+## analyzed. The default is 256000.
 
-SAMPLING_RATE=441000
+SAMPLING_RATE=256000
 
 ## EXTRACTION_LENGTH sets the length of the audio extractions that will be made
 ## from each BirdNET-Lite detection. An empty value will use the default of 6
