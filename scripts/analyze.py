@@ -3,7 +3,7 @@ import socket
 
 HEADER = 64
 PORT = 5050
-FORMAT = 'utf-8'
+FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = "localhost"
 ADDR = (SERVER, PORT)
@@ -16,103 +16,110 @@ def send(msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
+    send_length += b" " * (HEADER - len(send_length))
     client.send(send_length)
     client.send(message)
     print(client.recv(2048).decode(FORMAT))
 
 
 def main():
-
-    global INCLUDE_LIST
-    global EXCLUDE_LIST
-
     # Parse passed arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('--i', help='Path to input file.')
+    parser.add_argument("--i", help="Path to input file.")
     parser.add_argument(
-        '--o',
-        default='result.csv',
-        help='Path to output file. Defaults to result.csv.')
+        "--o",
+        default="result.csv",
+        help="Path to output file. Defaults to result.csv.",
+    )
     parser.add_argument(
-        '--lat',
+        "--lat",
         type=float,
         default=-1,
-        help='Recording location latitude. Set -1 to ignore.')
+        help="Recording location latitude. Set -1 to ignore.",
+    )
     parser.add_argument(
-        '--lon',
+        "--lon",
         type=float,
         default=-1,
-        help='Recording location longitude. Set -1 to ignore.')
+        help="Recording location longitude. Set -1 to ignore.",
+    )
     parser.add_argument(
-        '--week',
+        "--week",
         type=int,
         default=-1,
-        help='Week of the year when the recording was made. Values in [1, 48] (4 weeks per month). Set -1 to ignore.')
+        help="Week of the year when the recording was made. Values in [1, 48] (4 weeks per month). Set -1 to ignore.",
+    )
     parser.add_argument(
-        '--overlap',
+        "--overlap",
         type=float,
         default=0.0,
-        help='Overlap in seconds between extracted spectrograms. Values in [0.0, 2.9]. Defaults tp 0.0.')
+        help="Overlap in seconds between extracted spectrograms. Values in [0.0, 2.9]. Defaults tp 0.0.",
+    )
     parser.add_argument(
-        '--sensitivity',
+        "--sensitivity",
         type=float,
         default=1.0,
-        help='Detection sensitivity; Higher values result in higher sensitivity. Values in [0.5, 1.5]. Defaults to 1.0.')
+        help="Detection sensitivity; Higher values result in higher sensitivity. Values in [0.5, 1.5]. Defaults to 1.0.",
+    )
     parser.add_argument(
-        '--min_conf',
+        "--min_conf",
         type=float,
         default=0.1,
-        help='Minimum confidence threshold. Values in [0.01, 0.99]. Defaults to 0.1.')
+        help="Minimum confidence threshold. Values in [0.01, 0.99]. Defaults to 0.1.",
+    )
     parser.add_argument(
-        '--include_list',
-        default='null',
-        help='Path to text file containing a list of included species. Not used if not provided.')
+        "--include_list",
+        default="null",
+        help="Path to text file containing a list of included species. Not used if not provided.",
+    )
     parser.add_argument(
-        '--exclude_list',
-        default='null',
-        help='Path to text file containing a list of excluded species. Not used if not provided.')
+        "--exclude_list",
+        default="null",
+        help="Path to text file containing a list of excluded species. Not used if not provided.",
+    )
     parser.add_argument(
-        '--birdweather_id',
-        default='99999',
-        help='Private Station ID for BirdWeather.')
+        "--birdweather_id",
+        default="99999",
+        help="Private Station ID for BirdWeather.",
+    )
 
     args = parser.parse_args()
 
-    sockParams = ''
+    sockParams = ""
     if args.i:
-        sockParams += 'i=' + args.i + '||'
+        sockParams += "i=" + args.i + "||"
     if args.o:
-        sockParams += 'o=' + args.o + '||'
+        sockParams += "o=" + args.o + "||"
     if args.birdweather_id:
-        sockParams += 'birdweather_id=' + args.birdweather_id + '||'
+        sockParams += "birdweather_id=" + args.birdweather_id + "||"
     if args.include_list:
-        sockParams += 'include_list=' + args.include_list + '||'
+        sockParams += "include_list=" + args.include_list + "||"
     if args.exclude_list:
-        sockParams += 'exclude_list=' + args.exclude_list + '||'
+        sockParams += "exclude_list=" + args.exclude_list + "||"
     if args.overlap:
-        sockParams += 'overlap=' + str(args.overlap) + '||'
+        sockParams += "overlap=" + str(args.overlap) + "||"
     if args.week:
-        sockParams += 'week=' + str(args.week) + '||'
+        sockParams += "week=" + str(args.week) + "||"
     if args.sensitivity:
-        sockParams += 'sensitivity=' + str(args.sensitivity) + '||'
+        sockParams += "sensitivity=" + str(args.sensitivity) + "||"
     if args.min_conf:
-        sockParams += 'min_conf=' + str(args.min_conf) + '||'
+        sockParams += "min_conf=" + str(args.min_conf) + "||"
     if args.lat:
-        sockParams += 'lat=' + str(args.lat) + '||'
+        sockParams += "lat=" + str(args.lat) + "||"
     if args.lon:
-        sockParams += 'lon=' + str(args.lon) + '||'
+        sockParams += "lon=" + str(args.lon) + "||"
 
     send(sockParams)
 
     send(DISCONNECT_MESSAGE)
     # time.sleep(3)
 
+
 ###############################################################################
 ###############################################################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()
 

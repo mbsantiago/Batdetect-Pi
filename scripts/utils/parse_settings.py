@@ -2,7 +2,7 @@ def config_to_settings(path):
     # Returns settings dict from BirdNET-pi text format.
     # Consider refactoring to use ConfigParser files, or another standardized format.
     settings = {}
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         this_run = f.readlines()
     for i in this_run:
         key = i.split("=")[0]
